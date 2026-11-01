@@ -36,6 +36,27 @@ fixHist();
 let cands=[];
 try{cands=JSON.parse(localStorage.getItem("gc")||"[]")}catch(e){cands=[]}
 
+function warm(){
+  try{
+    const w=new SpeechSynthesisUtterance(" ");
+    w.volume=0;
+    speechSynthesis.speak(w);
+  }catch(e){}
+}
+function speak(text){
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="en-IN";
+    const vs=speechSynthesis.getVoices();
+    const v=vs.find(x=>x.localService&&x.lang&&x.lang.startsWith("en"))
+      ||vs.find(x=>x.lang&&x.lang.startsWith("en"));
+    if(v)u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+try{speechSynthesis.getVoices()}catch(e){}
+
 async function getCands(){
   if(cands.length)return cands;
   try{
@@ -91,7 +112,7 @@ if(!R){
 }else{
   const rec=new R();
   rec.lang="en-IN";
-  b.onclick=()=>{t.textContent="Listening...";try{rec.start()}catch(e){}};
+  b.onclick=()=>{t.textContent="Listening...";warm();try{rec.start()}catch(e){}};
   rec.onerror=e=>{t.textContent="Mic error: "+e.error};
   rec.onresult=async e=>{
     const text=e.results[0][0].transcript;
@@ -112,8 +133,8 @@ if(!R){
     hist.push({role:"model",parts:[{text:reply}]});
     fixHist();
     localStorage.setItem("hist",JSON.stringify(hist));
+    speak(reply);
     t.textContent+="\nJarvis: "+reply;
-    speechSynthesis.speak(new SpeechSynthesisUtterance(reply));
     if(window.saveChat)window.saveChat(text,reply,lastModel);
   };
   t.textContent="Tap the mic and speak.";
