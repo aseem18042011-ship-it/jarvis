@@ -144,7 +144,6 @@ window.saveChat=async(text,reply,model)=>{
       user:text,reply:reply,model:model||"",
       ts:serverTimestamp()
     });
-    hinfo.textContent="History saved";
   }catch(e){hinfo.textContent="History save error: "+e.code}
 };
 </script>
