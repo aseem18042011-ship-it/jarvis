@@ -1,0 +1,38 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jarvis</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111111">
+<script>if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js")</script>
+<body style="font-family:sans-serif;text-align:center;background:#111;color:#eee">
+<h2>Jarvis</h2>
+<button id="b" style="font-size:40px;padding:30px;border-radius:50%">🎤</button>
+<p id="t" style="white-space:pre-wrap"></p>
+<script>
+const MODEL="gemini-2.5-flash";
+let key=localStorage.getItem("gk");
+if(!key){key=prompt("Paste your Gemini API key");localStorage.setItem("gk",key)}
+let hist=JSON.parse(localStorage.getItem("hist")||"[]");
+const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+const rec=new R();rec.lang="en-IN";
+b.onclick=()=>{t.textContent="Listening...";rec.start()};
+rec.onresult=async e=>{
+  const text=e.results[0][0].transcript;
+  t.textContent="You: "+text;
+  hist.push({role:"user",parts:[{text}]});
+  const sys="You are Jarvis, a witty, concise voice assistant. Reply in 1-3 short sentences. Current time: "+new Date().toLocaleString();
+  const r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+MODEL+":generateContent?key="+key,{
+    method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:hist})});
+  const j=await r.json();
+  let reply;
+  try{reply=j.candidates[0].content.parts[0].text}
+  catch(err){hist.pop();t.textContent+="\nError: "+JSON.stringify(j).slice(0,200);return}
+  hist.push({role:"model",parts:[{text:reply}]});
+  hist=hist.slice(-30);
+  localStorage.setItem("hist",JSON.stringify(hist));
+  t.textContent+="\nJarvis: "+reply;
+  speechSynthesis.speak(new SpeechSynthesisUtterance(reply));
+};
+</script>
+</body>
