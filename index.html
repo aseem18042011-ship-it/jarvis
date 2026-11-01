@@ -13,8 +13,7 @@
 <p id="hinfo" style="font-size:12px;color:#888;white-space:pre-wrap"></p>
 
 <script>
-const KEY="AQ.Ab8RN6LNmbI5BTfx9cTgEp6BITzzfwnCMoxcKx00d2Ds9vco_g";
-const API="https://generativelanguage.googleapis.com/v1beta/models";
+const API="/api/chat";
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let lastModel="";
 
@@ -40,7 +39,7 @@ try{cands=JSON.parse(localStorage.getItem("gc")||"[]")}catch(e){cands=[]}
 async function getCands(){
   if(cands.length)return cands;
   try{
-    const r=await fetch(API+"?pageSize=200&key="+KEY);
+    const r=await fetch(API);
     const j=await r.json();
     const ok=(j.models||[])
       .filter(x=>(x.supportedGenerationMethods||[]).includes("generateContent")
@@ -62,14 +61,14 @@ async function ask(contents,sys,status){
   for(const m of list){
     for(let i=0;i<3;i++){
       try{
-        const r=await fetch(API+"/"+m+":generateContent?key="+KEY,{
+        const r=await fetch(API,{
           method:"POST",
           headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:contents})
+          body:JSON.stringify({model:m,system_instruction:{parts:[{text:sys}]},contents:contents})
         });
         j=await r.json();
       }catch(err){
-        return {error:{code:0,message:"Network problem: "+String(err)}};
+        return {error:{code:0,message:"Could not reach the server ("+String(err)+"). Open Jarvis from your Vercel link."}};
       }
       if(j.error&&j.error.code==503){status("Busy, trying again...");await sleep(800*(i+1));continue}
       break;
