@@ -1,4 +1,5 @@
 <!doctype html>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Jarvis Panel</title>
 <body style="font-family:sans-serif;background:#111;color:#eee;margin:0;padding:12px">
@@ -8,7 +9,7 @@
   <button id="r" style="padding:8px 14px" hidden>↻ Refresh</button>
 </div>
 <div id="f" style="text-align:center;margin:10px"></div>
-<div id="l"></div>
+<div id="l" style="white-space:pre-wrap">Loading...</div>
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -21,40 +22,56 @@ const app=initializeApp({
   appId:"1:377841047888:web:1ff60571f97d2a28597455"
 });
 const auth=getAuth(app),db=getFirestore(app);
+const S=document.getElementById("s"),Rf=document.getElementById("r"),F=document.getElementById("f"),L=document.getElementById("l");
 let rows=[],filter="All",me=null;
 
 onAuthStateChanged(auth,u=>{
-  me=u;
-  if(u){s.textContent="Sign out ("+u.email+")";r.hidden=false;load()}
-  else{s.textContent="Sign in with Google";r.hidden=true;f.innerHTML="";l.textContent="Please sign in."}
+  me=(u&&!u.isAnonymous)?u:null;
+  if(me){
+    S.textContent="Sign out ("+me.email+")";
+    Rf.hidden=false;
+    load();
+  }else{
+    S.textContent="Sign in with Google";
+    Rf.hidden=true;
+    F.innerHTML="";
+    L.textContent="Please tap Sign in with Google.";
+  }
 });
-s.onclick=async()=>{
+
+S.onclick=async()=>{
   if(me){await signOut(auth);return}
   try{await signInWithPopup(auth,new GoogleAuthProvider())}
-  catch(e){l.textContent="Sign-in error: "+e.code}
+  catch(e){L.textContent="Sign-in error: "+e.code+"\nIf it says unauthorized-domain, add your github.io address in Firebase, Authentication, Settings, Authorized domains. If a popup was blocked, allow popups for this site."}
 };
-r.onclick=()=>load();
+Rf.onclick=()=>load();
 
 async function load(){
-  l.textContent="Loading...";
+  L.textContent="Loading...";
   try{
     const snap=await getDocs(query(collection(db,"chats"),orderBy("ts","desc"),limit(300)));
     rows=snap.docs.map(d=>d.data());
     render();
-  }catch(e){l.textContent="Error: "+e.code+" "+e.message}
+  }catch(e){
+    if(e.code==="permission-denied"){
+      L.textContent="Permission denied.\nYou are signed in as "+(me?me.email:"?")+".\nThis must be exactly the Gmail written in your Firestore rules.";
+    }else{
+      L.textContent="Error: "+e.code+"\n"+e.message;
+    }
+  }
 }
 
 function render(){
-  const devs=["All",...new Set(rows.map(x=>x.device||"?"))];
-  f.innerHTML="";
+  const devs=["All"].concat(Array.from(new Set(rows.map(x=>x.device||"?"))));
+  F.innerHTML="";
   devs.forEach(d=>{
     const bt=document.createElement("button");
     bt.textContent=d;
     bt.style.cssText="margin:3px;padding:6px 12px;"+(d==filter?"background:#4af;":"");
     bt.onclick=()=>{filter=d;render()};
-    f.appendChild(bt);
+    F.appendChild(bt);
   });
-  l.innerHTML="";
+  L.innerHTML="";
   rows.filter(x=>filter=="All"||x.device==filter).forEach(x=>{
     const c=document.createElement("div");
     c.style.cssText="background:#222;border-radius:10px;padding:10px;margin:8px 0";
@@ -64,9 +81,9 @@ function render(){
     const q=document.createElement("div");q.textContent="You: "+x.user;
     const a=document.createElement("div");a.style.color="#9cf";a.textContent="Jarvis: "+x.reply;
     c.append(h,q,a);
-    l.appendChild(c);
+    L.appendChild(c);
   });
-  if(!l.children.length)l.textContent="No chats yet.";
+  if(!L.children.length)L.textContent="No chats yet. Talk to Jarvis first, then tap Refresh.";
 }
 </script>
 </body>
