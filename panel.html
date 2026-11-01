@@ -1,0 +1,72 @@
+<!doctype html>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Jarvis Panel</title>
+<body style="font-family:sans-serif;background:#111;color:#eee;margin:0;padding:12px">
+<h2 style="text-align:center">Jarvis History</h2>
+<div style="text-align:center">
+  <button id="s" style="padding:8px 14px">Sign in with Google</button>
+  <button id="r" style="padding:8px 14px" hidden>↻ Refresh</button>
+</div>
+<div id="f" style="text-align:center;margin:10px"></div>
+<div id="l"></div>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,collection,getDocs,query,orderBy,limit} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const app=initializeApp({
+  apiKey:"AIzaSyBosgoQylesH4V_yD8xhOotpp8OWkhSveI",
+  authDomain:"jarvis-4d64f.firebaseapp.com",
+  projectId:"jarvis-4d64f",
+  appId:"1:377841047888:web:1ff60571f97d2a28597455"
+});
+const auth=getAuth(app),db=getFirestore(app);
+let rows=[],filter="All",me=null;
+
+onAuthStateChanged(auth,u=>{
+  me=u;
+  if(u){s.textContent="Sign out ("+u.email+")";r.hidden=false;load()}
+  else{s.textContent="Sign in with Google";r.hidden=true;f.innerHTML="";l.textContent="Please sign in."}
+});
+s.onclick=async()=>{
+  if(me){await signOut(auth);return}
+  try{await signInWithPopup(auth,new GoogleAuthProvider())}
+  catch(e){l.textContent="Sign-in error: "+e.code}
+};
+r.onclick=()=>load();
+
+async function load(){
+  l.textContent="Loading...";
+  try{
+    const snap=await getDocs(query(collection(db,"chats"),orderBy("ts","desc"),limit(300)));
+    rows=snap.docs.map(d=>d.data());
+    render();
+  }catch(e){l.textContent="Error: "+e.code+" "+e.message}
+}
+
+function render(){
+  const devs=["All",...new Set(rows.map(x=>x.device||"?"))];
+  f.innerHTML="";
+  devs.forEach(d=>{
+    const bt=document.createElement("button");
+    bt.textContent=d;
+    bt.style.cssText="margin:3px;padding:6px 12px;"+(d==filter?"background:#4af;":"");
+    bt.onclick=()=>{filter=d;render()};
+    f.appendChild(bt);
+  });
+  l.innerHTML="";
+  rows.filter(x=>filter=="All"||x.device==filter).forEach(x=>{
+    const c=document.createElement("div");
+    c.style.cssText="background:#222;border-radius:10px;padding:10px;margin:8px 0";
+    const h=document.createElement("div");
+    h.style.cssText="font-size:12px;color:#888";
+    h.textContent=(x.device||"?")+" · "+(x.ts?x.ts.toDate().toLocaleString():"");
+    const q=document.createElement("div");q.textContent="You: "+x.user;
+    const a=document.createElement("div");a.style.color="#9cf";a.textContent="Jarvis: "+x.reply;
+    c.append(h,q,a);
+    l.appendChild(c);
+  });
+  if(!l.children.length)l.textContent="No chats yet.";
+}
+</script>
+</body>
