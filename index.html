@@ -9,7 +9,7 @@
 <button id="b" style="font-size:40px;padding:30px;border-radius:50%">🎤</button>
 <p id="t" style="white-space:pre-wrap"></p>
 <script>
-const MODEL="gemini-2.5-flash";
+const MODEL="gemini-3.8-flash";
 let key=localStorage.getItem("gk");
 if(!key){key=prompt("Paste your Gemini API key");localStorage.setItem("gk",key)}
 let hist=JSON.parse(localStorage.getItem("hist")||"[]");
