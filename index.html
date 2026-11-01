@@ -9,7 +9,7 @@
 <button id="b" style="font-size:40px;padding:30px;border-radius:50%">🎤</button>
 <p id="t" style="white-space:pre-wrap"></p>
 <script>
-const MODEL="gemini-3.8-flash-lite";
+const MODEL="gemini-3.8-flash";
 let key=localStorage.getItem("gk");
 if(!key){key=prompt("Paste your Gemini API key");localStorage.setItem("gk",key)}
 let hist=JSON.parse(localStorage.getItem("hist")||"[]");
@@ -26,20 +26,4 @@ rec.onresult=async e=>{
   const body=JSON.stringify({system_instruction:{parts:[{text:sys}]},contents:hist});
   let j;
   for(let i=0;i<4;i++){
-    try{const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body});j=await r.json();}catch(err){j={error:{code:0,message:String(err)}};break;}
-    if(!j.error||j.error.code!=503)break;
-    t.textContent="You: "+text+"\nBusy, trying again...";
-    await new Promise(s=>setTimeout(s,800*(i+1)));
-  }
-  t.textContent="You: "+text;
-  let reply;
-  try{reply=j.candidates[0].content.parts[0].text}
-  catch(err){hist.pop();t.textContent+="\nError: "+JSON.stringify(j).slice(0,200);return}
-  hist.push({role:"model",parts:[{text:reply}]});
-  hist=hist.slice(-10);
-  localStorage.setItem("hist",JSON.stringify(hist));
-  t.textContent+="\nJarvis: "+reply;
-  speechSynthesis.speak(new SpeechSynthesisUtterance(reply));
-};
-</script>
-</body>
+    try{const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body});j=await r.json();}catch(err){j={error:{co
