@@ -11,6 +11,7 @@
 <p id="t" style="white-space:pre-wrap">Loading...</p>
 <p id="info" style="font-size:12px;color:#888;white-space:pre-wrap"></p>
 <p id="hinfo" style="font-size:12px;color:#888;white-space:pre-wrap"></p>
+<p style="position:fixed;bottom:12px;left:0;right:0;margin:0;font-size:13px;color:#888">Made by Aseem Khan</p>
 
 <script>
 const API="/api/chat";
@@ -99,7 +100,6 @@ async function ask(contents,sys,status){
       cands=[m].concat(list.filter(x=>x!==m));
       localStorage.setItem("gc",JSON.stringify(cands));
       lastModel=m;
-      info.textContent="Model: "+m;
     }
     return j;
   }
