@@ -29,7 +29,7 @@ if(!dev){dev=prompt("Name this device (for example Phone or Laptop)")||"Device";
 let hist=[];
 try{hist=JSON.parse(localStorage.getItem("hist")||"[]")}catch(e){hist=[]}
 function fixHist(){
-  hist=hist.slice(-10);
+  hist=hist.slice(-6);
   while(hist.length&&hist[0].role!=="user")hist.shift();
 }
 fixHist();
