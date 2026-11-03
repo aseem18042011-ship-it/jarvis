@@ -15,7 +15,8 @@ module.exports = async (req, res) => {
         headers: { ...h, "Content-Type": "application/json" },
         body: JSON.stringify({
           system_instruction: body.system_instruction,
-          contents: body.contents
+          contents: body.contents,
+          generationConfig: { maxOutputTokens: 150 }
         })
       });
     } else {
